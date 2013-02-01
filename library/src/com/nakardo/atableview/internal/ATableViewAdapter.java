@@ -155,16 +155,29 @@ public class ATableViewAdapter extends BaseAdapter {
 		
 		ATableViewCellSelectionStyle selectionStyle = cell.getSelectionStyle();
 		if (selectionStyle != ATableViewCellSelectionStyle.None) {
-			int startColor = res.getColor(R.color.atv_cell_selection_style_blue_start);
-			int endColor = res.getColor(R.color.atv_cell_selection_style_blue_end);
-			
-			ShapeDrawable pressed = new ATableViewCellDrawable(mTableView, backgroundStyle, rowHeight, startColor, endColor);
-			if (selectionStyle == ATableViewCellSelectionStyle.Gray) {
+			int startColor;
+			int endColor;
+			ShapeDrawable pressed;
+			switch (selectionStyle) {
+			case Blue:
+				startColor = res.getColor(R.color.atv_cell_selection_style_blue_start);
+				endColor = res.getColor(R.color.atv_cell_selection_style_blue_end);
+				break;
+			case Gray:
 				startColor = res.getColor(R.color.atv_cell_selection_style_gray_start);
 				endColor = res.getColor(R.color.atv_cell_selection_style_gray_end);
-				
-				pressed = new ATableViewCellDrawable(mTableView, backgroundStyle, rowHeight, startColor, endColor);
+				break;
+			case HoloBlue:
+				startColor = res.getColor(R.color.atv_cell_selection_style_icsblue);
+				endColor = res.getColor(R.color.atv_cell_selection_style_icsblue);
+				break;
+			default:
+				startColor = res.getColor(R.color.atv_cell_selection_style_blue_start);
+				endColor = res.getColor(R.color.atv_cell_selection_style_blue_end);
+				break;
 			}
+			
+			pressed = new ATableViewCellDrawable(mTableView, backgroundStyle, rowHeight, startColor, endColor);
 			
 			drawable.addState(new int[] { android.R.attr.state_pressed }, pressed);
 			drawable.addState(new int[] { android.R.attr.state_focused }, pressed);

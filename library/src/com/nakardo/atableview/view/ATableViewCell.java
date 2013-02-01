@@ -14,7 +14,7 @@ import com.nakardo.atableview.internal.ATableViewCellAccessoryView.ATableViewCel
 
 public class ATableViewCell extends FrameLayout {
 	public enum ATableViewCellStyle { Default, Subtitle, Value1, Value2 };
-	public enum ATableViewCellSelectionStyle { None, Blue, Gray };
+	public enum ATableViewCellSelectionStyle { None, Blue, Gray, HoloBlue };
 	
 	private String mReuseIdentifier;
 	private TextView mTextLabel;
@@ -23,7 +23,7 @@ public class ATableViewCell extends FrameLayout {
 	private int mBackgroundColor = getResources().getColor(R.color.atv_cell_background);
 	private ATableViewCellAccessoryType mAccessoryType = ATableViewCellAccessoryType.None;
 //	private View mAccessoryView;
-	private ATableViewCellSelectionStyle mSelectionStyle = ATableViewCellSelectionStyle.Blue;
+	private ATableViewCellSelectionStyle mSelectionStyle = ATableViewCellSelectionStyle.HoloBlue;
 	
 	protected int getLayout(ATableViewCellStyle style) {
 		switch (style) {
