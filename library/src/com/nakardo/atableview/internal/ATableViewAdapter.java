@@ -31,31 +31,26 @@ public class ATableViewAdapter extends BaseAdapter {
 	protected ATableView mTableView;
 
 	private void initialize() {
+		ATableViewDataSource dataSource = mTableView.getDataSource();
+		ATableViewDelegate delegate = mTableView.getDelegate();
+		
 		mRows = new ArrayList<Integer>();
 		mRowsHeight = new ArrayList<List<Integer>>();
 		
-		int sections = 0;
-		
-		// datasource.
-		ATableViewDataSource dataSource = mTableView.getDataSource();
-		if (dataSource != null) {
-			sections = dataSource.numberOfSectionsInTableView(mTableView);
-			for (int s = 0; s < sections; s++) {
-				mRows.add(dataSource.numberOfRowsInSection(mTableView, s));
-			}
+		int sections = dataSource.numberOfSectionsInTableView(mTableView);
+		for (int s = 0; s < sections; s++) {
+			mRows.add(dataSource.numberOfRowsInSection(mTableView, s));
 		}
 		
-		// delegate.
-		ATableViewDelegate delegate = mTableView.getDelegate();
 		for (int s = 0; s < sections; s++) {
-			List<Integer> sectionHeights = new ArrayList<Integer>();
+			List<Integer> sHeights = new ArrayList<Integer>();
 			
 			int rows = mRows.get(s);
 			for (int r = 0; r < rows; r++) {
 				NSIndexPath indexPath = NSIndexPath.indexPathForRowInSection(r, s);
-				sectionHeights.add(delegate.heightForRowAtIndexPath(mTableView, indexPath));
+				sHeights.add(delegate.heightForRowAtIndexPath(mTableView, indexPath));
 			} 
-			mRowsHeight.add(sectionHeights);
+			mRowsHeight.add(sHeights);
 		}
 	}
 	
