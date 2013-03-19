@@ -21,7 +21,7 @@ public class ATableViewCell extends FrameLayout {
 	private TextView mDetailTextLabel;
 	private ImageView mImageView;
 	private int mBackgroundColor = -1;
-	private ATableViewCellAccessoryType mAccessoryType = ATableViewCellAccessoryType.None;;
+	private ATableViewCellAccessoryType mAccessoryType = ATableViewCellAccessoryType.None;
 	private ATableViewCellSelectionStyle mSelectionStyle = ATableViewCellSelectionStyle.Blue;
 	
 	protected int getLayout(ATableViewCellStyle style) {
