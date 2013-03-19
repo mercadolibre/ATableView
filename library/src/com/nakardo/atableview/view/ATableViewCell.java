@@ -1,7 +1,6 @@
 package com.nakardo.atableview.view;
 
 import android.content.Context;
-import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -14,16 +13,16 @@ import com.nakardo.atableview.internal.ATableViewCellAccessoryView.ATableViewCel
 
 public class ATableViewCell extends FrameLayout {
 	public enum ATableViewCellStyle { Default, Subtitle, Value1, Value2 };
-	public enum ATableViewCellSelectionStyle { None, Blue, Gray, HoloBlue };
+	public enum ATableViewCellSelectionStyle { None, Blue, Gray };
+	public enum ATableViewCellSeparatorStyle { None, SingleLine, SingleLineEtched };
 	
 	private String mReuseIdentifier;
 	private TextView mTextLabel;
 	private TextView mDetailTextLabel;
 	private ImageView mImageView;
-	private int mBackgroundColor = getResources().getColor(R.color.atv_cell_background);
-	private ATableViewCellAccessoryType mAccessoryType = ATableViewCellAccessoryType.None;
-//	private View mAccessoryView;
-	private ATableViewCellSelectionStyle mSelectionStyle = ATableViewCellSelectionStyle.HoloBlue;
+	private int mBackgroundColor = -1;
+	private ATableViewCellAccessoryType mAccessoryType = ATableViewCellAccessoryType.None;;
+	private ATableViewCellSelectionStyle mSelectionStyle = ATableViewCellSelectionStyle.Blue;
 	
 	protected int getLayout(ATableViewCellStyle style) {
 		switch (style) {
@@ -39,7 +38,7 @@ public class ATableViewCell extends FrameLayout {
 	}
 	
 	public ATableViewCell(ATableViewCellStyle style, String reuseIdentifier, Context context) {
-		this(context);
+		super(context);
 		View contentView = LayoutInflater.from(context).inflate(getLayout(style), null);
 		addView(contentView);
 		
@@ -51,14 +50,6 @@ public class ATableViewCell extends FrameLayout {
 	
 	public ATableViewCell(Context context) {
 		super(context);
-	}
-	
-	public ATableViewCell(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
-	
-	public ATableViewCell(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
 	}
 	
 	public int getBackgroundColor() {
@@ -94,21 +85,15 @@ public class ATableViewCell extends FrameLayout {
 		ATableViewCellAccessoryView.setup(this, accessoryType);
 	}
 	
-	/*
-	public View getAccessoryView() {
-		return mAccessoryView;
-	}
-	
-	public void setAccessoryView(View accessoryView) {
-		mAccessoryView = accessoryView;
-	}
-	*/
-	
 	public ATableViewCellSelectionStyle getSelectionStyle() {
 		return mSelectionStyle;
 	}
 	
 	public void setSelectionStyle(ATableViewCellSelectionStyle selectionStyle) {
 		mSelectionStyle = selectionStyle;
+	}
+	
+	public class LayoutParams {
+		public static final int UNDEFINED = -3;
 	}
 }

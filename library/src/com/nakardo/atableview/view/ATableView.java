@@ -6,16 +6,17 @@ import android.view.View;
 import android.widget.HeaderViewListAdapter;
 import android.widget.ListView;
 
-import com.nakardo.atableview.R;
 import com.nakardo.atableview.internal.ATableViewAdapter;
-import com.nakardo.atableview.internal.ATableViewRowClickListener;
+import com.nakardo.atableview.internal.ATableViewCellClickListener;
 import com.nakardo.atableview.protocol.ATableViewDataSource;
 import com.nakardo.atableview.protocol.ATableViewDelegate;
+import com.nakardo.atableview.view.ATableViewCell.ATableViewCellSeparatorStyle;
 
 public class ATableView extends ListView {
 	private static final ATableViewStyle DEFAULT_STYLE = ATableViewStyle.Plain;
 	
-	private int mSeparatorColor = getResources().getColor(R.color.atv_separator);
+	private ATableViewCellSeparatorStyle mSeparatorStyle = ATableViewCellSeparatorStyle.SingleLine;
+	private int mSeparatorColor = -1;
 	private ATableViewStyle mStyle = DEFAULT_STYLE;
 	private ATableViewDataSource mDataSource;
 	private ATableViewDelegate mDelegate = new ATableViewDelegate();
@@ -47,6 +48,14 @@ public class ATableView extends ListView {
 		super(context, attrs, defStyle);
 	}
 
+	public ATableViewCellSeparatorStyle getSeparatorStyle() {
+		return mSeparatorStyle;
+	}
+	
+	public void setSeparatorStyle(ATableViewCellSeparatorStyle separatorStyle) {
+		mSeparatorStyle = separatorStyle;
+	}
+	
 	public int getSeparatorColor() {
 		return mSeparatorColor;
 	}
@@ -96,7 +105,7 @@ public class ATableView extends ListView {
 	@Override
 	protected void onAttachedToWindow() {
 		setAdapter(new ATableViewAdapter(this));
-		setOnItemClickListener(new ATableViewRowClickListener(this));
+		setOnItemClickListener(new ATableViewCellClickListener(this));
 		super.onAttachedToWindow();
 	}
 }

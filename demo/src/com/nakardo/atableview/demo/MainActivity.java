@@ -7,6 +7,8 @@ import java.util.List;
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -20,14 +22,25 @@ import com.nakardo.atableview.view.ATableView;
 import com.nakardo.atableview.view.ATableView.ATableViewStyle;
 import com.nakardo.atableview.view.ATableViewCell;
 import com.nakardo.atableview.view.ATableViewCell.ATableViewCellSelectionStyle;
+import com.nakardo.atableview.view.ATableViewCell.ATableViewCellSeparatorStyle;
 import com.nakardo.atableview.view.ATableViewCell.ATableViewCellStyle;
 
 public class MainActivity extends Activity {
 	private List<List<String>> mCapitals;
 	private List<List<String>> mProvinces;
 	private String[] mRegions = {
-		"Northwest", "Gran Chaco", "Mesopotamia", "Pampas", "Cuyo", "Patagonia", "Single"
+		"Northwest", "Gran Chaco", "Mesopotamia", "Pampas", "Cuyo", "Patagonia", "Capital City"
 	};
+	private String[] mNotes = {
+		null, "Southwestern Santiago del Estero is sometimes considered part of the Sierras area.",
+		null, "Southern part of La Pampa is sometimes called Dry Pampa and included in Patagonia.",
+		"La Rioja is sometimes considered part of Cuyo region instead of the Northwest.", null,
+		null, null
+	};
+	
+	private ATableView mTableView;
+	private ATableViewStyle mTableViewStyle = ATableViewStyle.Grouped;
+	private ATableViewCellSeparatorStyle mTableViewSeparatorStyle = ATableViewCellSeparatorStyle.SingleLineEtched;
 	
 	private static List<List<String>> createProvincesList() {
 		List<List<String>> provinces = new ArrayList<List<String>>();
@@ -38,7 +51,7 @@ public class MainActivity extends Activity {
 		provinces.add(Arrays.asList(new String[] { "Córdoba", "Santa Fe", "La Pampa", "Buenos Aires" }));
 		provinces.add(Arrays.asList(new String[] { "San Juan", "La Rioja", "Mendoza", "San Luis" }));
 		provinces.add(Arrays.asList(new String[] { "Rio Negro", "Neuquén", "Chubut", "Santa Cruz", "Tierra del Fuego" }));
-		provinces.add(Arrays.asList(new String[] { "Single Province" }));
+		provinces.add(Arrays.asList(new String[] { "Autonomous City of Buenos Aires" }));
 		
 		return provinces;
 	}
@@ -52,9 +65,56 @@ public class MainActivity extends Activity {
 		capitals.add(Arrays.asList(new String[] { "Cordoba", "Santa Fe", "Santa Rosa", "Capital Federal" }));
 		capitals.add(Arrays.asList(new String[] { "San Juan", "La Rioja", "Mendoza", "San Luis" }));
 		capitals.add(Arrays.asList(new String[] { "Viedma", "Neuquén", "Rawson", "Rio Gallegos", "Ushuaia" }));
-		capitals.add(Arrays.asList(new String[] { "Single Capital" }));
+		capitals.add(Arrays.asList(new String[] { "" }));
 		
 		return capitals;
+	}
+	
+	private void createTableView() {
+		mTableView = new ATableView(mTableViewStyle, this);
+		mTableView.setSeparatorStyle(mTableViewSeparatorStyle);
+        mTableView.setDataSource(new SampleATableViewDataSource());
+        mTableView.setDelegate(new SampleATableViewDelegate());
+        
+        FrameLayout container = (FrameLayout)findViewById(android.R.id.content);
+        container.addView(mTableView);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			case R.id.grouped_etched:
+				mTableViewStyle = ATableViewStyle.Grouped;
+				mTableViewSeparatorStyle = ATableViewCellSeparatorStyle.SingleLineEtched;
+				break;
+			case R.id.grouped_single:
+				mTableViewStyle = ATableViewStyle.Grouped;
+				mTableViewSeparatorStyle = ATableViewCellSeparatorStyle.SingleLine;
+				break;
+			case R.id.plain:
+				mTableViewStyle = ATableViewStyle.Plain;
+				break;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+		
+		FrameLayout container = (FrameLayout)findViewById(android.R.id.content);
+		container.removeView(mTableView);
+		
+		createTableView();
+		
+		return true;
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.main_menu, menu);
+		return true;
+	}
+	
+	@Override
+	public Object onRetainNonConfigurationInstance() {
+		return new ConfigurationHolder(this);
 	}
 	
     @Override
@@ -65,12 +125,13 @@ public class MainActivity extends Activity {
         mCapitals = createCapitalsList();
         mProvinces = createProvincesList();
         
-        ATableView tableView = new ATableView(ATableViewStyle.Grouped, this);
-        tableView.setDataSource(new SampleATableViewDataSource());
-        tableView.setDelegate(new SampleATableViewDelegate());
+        ConfigurationHolder holder = (ConfigurationHolder) getLastNonConfigurationInstance();
+        if (holder != null) {
+        	mTableViewStyle = holder.tableViewStyle;
+        	mTableViewSeparatorStyle = holder.tableViewSeparatorStyle;
+		}
         
-        FrameLayout container = (FrameLayout)findViewById(android.R.id.content);
-        container.addView(tableView);
+        createTableView();
     }
 
     private Drawable getDrawableForRow(int row) {
@@ -135,7 +196,7 @@ public class MainActivity extends Activity {
 				// imageView
 				ImageView imageView = cell.getImageView();
 				if (indexPath.getSection() == 4) {
-					int paddingLeft = (int) (8 * getResources().getDisplayMetrics().density);
+					int paddingLeft = (int) Math.ceil(8 * getResources().getDisplayMetrics().density);
 					imageView.setPadding(paddingLeft, 0, 0, 0);
 					imageView.setImageDrawable(getDrawableForRow(row));
 				} else {
@@ -177,7 +238,17 @@ public class MainActivity extends Activity {
 		public int numberOfSectionsInTableView(ATableView tableView) {
 			return mRegions.length;
 		}
-
+		
+		@Override
+		public String titleForHeaderInSection(ATableView tableView, int section) {
+			return mRegions[section];
+		}
+		
+		@Override
+		public String titleForFooterInSection(ATableView tableView, int section) {
+			return mNotes[section];
+		}
+		
 		@Override
 		public int numberOfRowStyles() {
 			return 5;
@@ -205,18 +276,26 @@ public class MainActivity extends Activity {
 		
 		@Override
 		public void didSelectRowAtIndexPath(ATableView tableView, NSIndexPath indexPath) {
-			CharSequence text = String.format("Selected IndexPath [%d, %d]",
-					indexPath.getSection(), indexPath.getRow());
+			String text ="Selected IndexPath [" + indexPath.getSection() + "," + indexPath.getRow() + "]";
 			Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
 			toast.show();
 		}
 		
 		@Override
 		public void accessoryButtonTappedForRowWithIndexPath(ATableView tableView, NSIndexPath indexPath) {
-			CharSequence text = String.format("Tapped DisclosureButton at indexPath [%d, %d]",
-					indexPath.getSection(), indexPath.getRow());
+			String text = "Tapped DisclosureButton at indexPath [" + indexPath.getSection() + "," + indexPath.getRow() + "]";
 			Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
 			toast.show();
+		}
+	}
+	
+	private static class ConfigurationHolder {
+		public ATableViewStyle tableViewStyle;
+		public ATableViewCellSeparatorStyle tableViewSeparatorStyle;
+		
+		public ConfigurationHolder(MainActivity activity) {
+			tableViewStyle = activity.mTableViewStyle;
+			tableViewSeparatorStyle = activity.mTableViewSeparatorStyle;
 		}
 	}
 }

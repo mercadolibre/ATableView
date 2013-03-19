@@ -1,13 +1,21 @@
 package com.nakardo.atableview.protocol;
 
+import com.nakardo.atableview.R;
 import com.nakardo.atableview.foundation.NSIndexPath;
 import com.nakardo.atableview.view.ATableView;
+import com.nakardo.atableview.view.ATableViewCell;
 
 public class ATableViewDelegate {
-	private static final int DEFAULT_ROW_HEIGHT = 44;
-	
 	public int heightForRowAtIndexPath(ATableView tableView, NSIndexPath indexPath) {
-		return DEFAULT_ROW_HEIGHT;
+		return (int) tableView.getResources().getDimension(R.dimen.atv_cell_default_row_height);
+	}
+	
+	public int heightForHeaderInSection(ATableView tableView, int section) {
+		return ATableViewCell.LayoutParams.UNDEFINED;
+	}
+	
+	public int heightForFooterInSection(ATableView tableView, int section) {
+		return ATableViewCell.LayoutParams.UNDEFINED;
 	}
 	
 	public void didSelectRowAtIndexPath(ATableView tableView, NSIndexPath indexPath) {
