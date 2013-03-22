@@ -19,7 +19,7 @@ import com.nakardo.atableview.view.ATableViewCell.ATableViewCellSeparatorStyle;
 
 public class ATableViewCellDrawable extends ShapeDrawable {
 	public static final float CELL_STROKE_WIDTH_DP = 1f;
-	private static final float CELL_GROUPED_STYLE_CORNER_RADIUS = 0; // 7;
+	private static final float CELL_GROUPED_STYLE_CORNER_RADIUS = 3; // 7;
 	
 	public enum ATableViewCellBackgroundStyle { Single, Top, Middle, Bottom };
 	
