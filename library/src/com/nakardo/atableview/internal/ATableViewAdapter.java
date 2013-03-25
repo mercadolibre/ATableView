@@ -6,6 +6,7 @@ import java.util.List;
 import android.content.res.Resources;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -410,13 +411,15 @@ public class ATableViewAdapter extends BaseAdapter {
 
 	@Override
 	public int getViewTypeCount() {
+		int count = getHeaderFooterStyleCount();
+		
 		ATableViewDataSource dataSource = mTableView.getDataSource();
 	    if (dataSource instanceof ATableViewDataSourceExt) {
 	    	// TODO: additional styles for header and footers. Also custom header should be handled here when supported.
-			return ((ATableViewDataSourceExt) dataSource).numberOfRowStyles() + getHeaderFooterStyleCount();
+			count += ((ATableViewDataSourceExt) dataSource).numberOfRowStyles();
 		}
 	    
-	    return 1;
+	    return count;
 	}
 	
 	@Override
@@ -452,6 +455,7 @@ public class ATableViewAdapter extends BaseAdapter {
 		boolean isFooterRow = isFooterRow(position);
 		
 		NSIndexPath indexPath = getIndexPath(position);
+		Log.d("INDEXPATH", "R: " + indexPath.getRow() + " S: " + indexPath.getSection());
 		if (isHeaderRow || isFooterRow) {
 			ATableViewHeaderFooterCell cell = getReusableHeaderFooterCell(convertView, isFooterRow);
 			
