@@ -455,7 +455,6 @@ public class ATableViewAdapter extends BaseAdapter {
 		boolean isFooterRow = isFooterRow(position);
 		
 		NSIndexPath indexPath = getIndexPath(position);
-		Log.d("INDEXPATH", "R: " + indexPath.getRow() + " S: " + indexPath.getSection());
 		if (isHeaderRow || isFooterRow) {
 			ATableViewHeaderFooterCell cell = getReusableHeaderFooterCell(convertView, isFooterRow);
 			
