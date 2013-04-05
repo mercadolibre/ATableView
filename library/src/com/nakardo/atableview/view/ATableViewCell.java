@@ -19,6 +19,9 @@ public class ATableViewCell extends FrameLayout {
 	// UIView
 	private int mBackgroundColor = -1;
 	
+	// internal
+	private View mContainerView;
+	
 	private String mReuseIdentifier;
 	private TextView mTextLabel;
 	private TextView mDetailTextLabel;
@@ -51,10 +54,15 @@ public class ATableViewCell extends FrameLayout {
 		mImageView = (ImageView)findViewById(R.id.imageView);
 		mContentView = findViewById(R.id.contentView);
 		mBackgroundView = findViewById(R.id.backgroundView);
+		mContainerView = findViewById(R.id.containerView);
 	}
 	
 	public ATableViewCell(Context context) {
 		super(context);
+	}
+	
+	public View getInternalContainerView() {
+		return mContainerView;
 	}
 	
 	public int getBackgroundColor() {
