@@ -373,13 +373,10 @@ public class ATableViewAdapter extends BaseAdapter {
 	private void setupRowContentView(ATableViewCell cell, NSIndexPath indexPath) {
 		ATableViewCellBackgroundStyle backgroundStyle = getRowBackgroundStyle(indexPath);
 		
-		// set margins accordingly to content view depending on stroke lines thickness, 
-		// containerView might not exist on custom cells.
-		View containerView = cell.getInternalContainerView();
-		if (containerView != null) {
-			Rect padding = ATableViewCellDrawable.getContentPadding(mTableView, backgroundStyle);
-			containerView.setPadding(padding.left, padding.top, padding.right, padding.bottom);
-		}
+		// set margins accordingly to content view depending on stroke lines thickness.
+		View contentView = cell.getContentView();
+		Rect padding = ATableViewCellDrawable.getContentPadding(mTableView, backgroundStyle);
+		contentView.setPadding(padding.left, padding.top, padding.right, padding.bottom);
 	}
 	
 	private void setupRowAccessoryButtonDelegateCallback(ATableViewCell cell, final NSIndexPath indexPath) {
@@ -438,7 +435,7 @@ public class ATableViewAdapter extends BaseAdapter {
 		
 		ATableViewDataSource dataSource = mTableView.getDataSource();
 	    if (dataSource instanceof ATableViewDataSourceExt) {
-	    	// TODO: additional styles for header and footers. Also custom header should be handled here when supported.
+	    	// TODO additional styles for header and footers. Also custom header should be handled here when supported.
 			count += ((ATableViewDataSourceExt) dataSource).numberOfRowStyles();
 		}
 	    
@@ -507,5 +504,15 @@ public class ATableViewAdapter extends BaseAdapter {
 		}
 		
 		return convertView;
+	}
+	
+	@Override
+	public boolean isEnabled(int position) {
+		// TODO disable sounds for header and footer rows, should be changed when supporting clicks on those views.
+		if (isHeaderRow(position) || isFooterRow(position)) {
+			return false;
+		}
+		
+		return super.isEnabled(position);
 	}
 }
