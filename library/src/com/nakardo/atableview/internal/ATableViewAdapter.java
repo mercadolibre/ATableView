@@ -8,7 +8,9 @@ import android.graphics.Rect;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.View;
+import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -25,7 +27,6 @@ import com.nakardo.atableview.view.ATableView;
 import com.nakardo.atableview.view.ATableView.ATableViewStyle;
 import com.nakardo.atableview.view.ATableViewCell;
 import com.nakardo.atableview.view.ATableViewCell.ATableViewCellSelectionStyle;
-import com.nakardo.atableview.view.ATableViewCell.ATableViewCellSeparatorStyle;
 
 public class ATableViewAdapter extends BaseAdapter {
 	private List<Boolean> mHasHeader;
@@ -175,28 +176,37 @@ public class ATableViewAdapter extends BaseAdapter {
 		return indexPath.getRow() == mRows.get(indexPath.getSection()) - 1;
 	}
 	
-	private int getRowHeight(NSIndexPath indexPath, ATableViewCell cell) {
+	private int getMeasuredRowHeight(ATableViewCell cell, NSIndexPath indexPath, boolean cache) {
+		
+		// closes #12, use table width instead cell since sometimes returns zero for WRAP_CONTENT height cells.
+		int widthMeasureSpec = MeasureSpec.makeMeasureSpec(mTableView.getWidth(), MeasureSpec.EXACTLY);
+		int heightMeasureSpec = MeasureSpec.makeMeasureSpec(AbsListView.LayoutParams.WRAP_CONTENT, MeasureSpec.EXACTLY);
+		cell.measure(widthMeasureSpec, heightMeasureSpec);
+		
+		// add measured height to cache, so we don't have to recalculate every time.
+		int height = (int) (cell.getMeasuredHeight() / cell.getResources().getDisplayMetrics().density);
+		if (cache) {
+			mRowsHeight.get(indexPath.getSection()).set(indexPath.getRow(), height);
+		}
+		
+		return height;
+	}
+	
+	private int getRowHeight(ATableViewCell cell, NSIndexPath indexPath, ATableViewCellBackgroundStyle backgroundStyle) {
 		Resources res = mTableView.getContext().getResources();
 		
-		// make height calculations only for valid values, exclude constants.
+		// transform height constants into values if we've set so.
+		// closes #7. it seems Android ~2.2 requires known row height to draw cell background drawable.
 		int rowHeight = mRowsHeight.get(indexPath.getSection()).get(indexPath.getRow());
-		if (rowHeight > -1) {
-			if (mTableView.getStyle() == ATableViewStyle.Plain) {
-				if (!isBottomRow(indexPath) && !isSingleRow(indexPath)) {
-					rowHeight += (int) ATableViewCellDrawable.CELL_STROKE_WIDTH_DP;
-				}
-			} else {
-				if (isBottomRow(indexPath) || isSingleRow(indexPath)) {
-					if (mTableView.getSeparatorStyle() == ATableViewCellSeparatorStyle.SingleLineEtched) {
-						rowHeight += (int) ATableViewCellDrawable.CELL_STROKE_WIDTH_DP;
-					}
-				}
-
-				rowHeight += (int) ATableViewCellDrawable.CELL_STROKE_WIDTH_DP;
-			}
-			
-			rowHeight = (int) Math.ceil(rowHeight * res.getDisplayMetrics().density);
+		if (rowHeight < 0) {
+			// cached for performance, it might have some impact if user changes the text after layout.
+			rowHeight = getMeasuredRowHeight(cell, indexPath, true);
 		}
+		rowHeight = (int) Math.ceil(rowHeight * res.getDisplayMetrics().density);
+		
+		// add extra height to rows depending on it's style.
+		Rect padding = ATableViewCellDrawable.getContentPadding(mTableView, backgroundStyle);
+		rowHeight += padding.top + padding.bottom;
 		
 		return rowHeight;
 	}
@@ -324,13 +334,11 @@ public class ATableViewAdapter extends BaseAdapter {
 		cell.setLayoutParams(params);
 	}
 	
-	private void setupRowLayout(ATableViewCell cell, NSIndexPath indexPath) {
-		Resources res = mTableView.getContext().getResources();
-		int rowHeight = getRowHeight(indexPath, cell);
+	private void setupRowLayout(ATableViewCell cell, NSIndexPath indexPath, int rowHeight) {
 		
-		// add margins for grouped style.
+		// add extra padding for grouped style.
 		if (mTableView.getStyle() == ATableViewStyle.Grouped) {
-			int margin = (int) res.getDimension(R.dimen.atv_cell_grouped_margins);
+			int margin = (int) cell.getResources().getDimension(R.dimen.atv_cell_grouped_margins);
 			cell.setPadding(margin, 0, margin, 0);
 		}
 		
@@ -338,8 +346,8 @@ public class ATableViewAdapter extends BaseAdapter {
 		cell.setLayoutParams(params);
 	}
 	
-	private void setupRowBackgroundDrawable(ATableViewCell cell, NSIndexPath indexPath) {
-		ATableViewCellBackgroundStyle backgroundStyle = getRowBackgroundStyle(indexPath);
+	private void setupRowBackgroundDrawable(ATableViewCell cell, NSIndexPath indexPath,
+			ATableViewCellBackgroundStyle backgroundStyle, int rowHeight) {
 		
 		// setup background drawables.
 		StateListDrawable drawable = new StateListDrawable();
@@ -356,16 +364,17 @@ public class ATableViewAdapter extends BaseAdapter {
 				endColor = res.getColor(R.color.atv_cell_selection_style_gray_end);
 			}
 			
-			ShapeDrawable pressed = new ATableViewCellDrawable(mTableView, backgroundStyle, startColor, endColor);
+			ShapeDrawable pressed = new ATableViewCellDrawable(mTableView, backgroundStyle, rowHeight, startColor, endColor);
 			drawable.addState(new int[] { android.R.attr.state_pressed }, pressed);
 			drawable.addState(new int[] { android.R.attr.state_focused }, pressed);
 		}
 		
-		ShapeDrawable normal = new ATableViewCellDrawable(mTableView, backgroundStyle, getRowBackgroundColor(cell));
+		int color = getRowBackgroundColor(cell);
+		ShapeDrawable normal = new ATableViewCellDrawable(mTableView, backgroundStyle, rowHeight, color);
 		drawable.addState(new int[] {}, normal);
 		
 		// when extending
-		ViewGroup backgroundView = (ViewGroup) cell.findViewById(R.id.backgroundView);
+		ViewGroup backgroundView = (ViewGroup) cell.getBackgroundView();
 		if (backgroundView == null) {
 			throw new RuntimeException("Cannot find R.id.backgroundView on your cell custom layout, " +
 					"please add it to remove this error.");
@@ -395,28 +404,19 @@ public class ATableViewAdapter extends BaseAdapter {
 		}
 	}
 	
-	public int getHeaderFooterStyleCount() {
-		int count = 0;
+	private int getHeaderFooterStyleCount() {
+		int count = 1;
 		
-		// check if we've a header or a footer at least.
-		int s = 0;
-		while (count < 2 && s < mRows.size()) {
-			int offset = getHeaderFooterCountOffset(s);
-			if (offset > count) count = offset;
-			s++;
+		// closes #10. getViewTypeCount() is only called once by the adapter even when notifyDataSetChanged is invoked,
+		// so we've to return header & footer styles even we don't have rows to display.
+		if (mTableView.getStyle() == ATableViewStyle.Grouped) {
+			count = 2;
 		}
 		
-		// only grouped style tables has different header and footer style.
-		if (mTableView.getStyle() == ATableViewStyle.Grouped && count > 1) {
-			return 2;
-		} else if (count > 0) {
-			return 1;
-		}
-		
-		return 0;
+		return count;
 	}
 	
-	public int getHeaderFooterCountOffset(int section) {
+	private int getHeaderFooterCountOffset(int section) {
 		return (hasHeader(section) ? 1 : 0) + (hasFooter(section) ? 1 : 0);
 	}
 	
@@ -440,6 +440,7 @@ public class ATableViewAdapter extends BaseAdapter {
 		ATableViewDataSource dataSource = mTableView.getDataSource();
 	    if (dataSource instanceof ATableViewDataSourceExt) {
 	    	// TODO should add custom headers & footers to view count here when supported.
+	    	// getViewTypeCount() is called only once, so no effect if this value is changed on runtime by the user.
 			count += ((ATableViewDataSourceExt) dataSource).numberOfRowStyles();
 		} else {
 			count += 1;
@@ -501,9 +502,12 @@ public class ATableViewAdapter extends BaseAdapter {
 			
 			cell = dataSource.cellForRowAtIndexPath(mTableView, indexPath);
 			
+			ATableViewCellBackgroundStyle backgroundStyle = getRowBackgroundStyle(indexPath);
+			int rowHeight = getRowHeight(cell, indexPath, backgroundStyle);
+			
 			// setup.
-			setupRowLayout(cell, indexPath);
-			setupRowBackgroundDrawable(cell, indexPath);
+			setupRowLayout(cell, indexPath, rowHeight);
+			setupRowBackgroundDrawable(cell, indexPath, backgroundStyle, rowHeight);
 			setupRowContentView(cell, indexPath);
 			setupRowAccessoryButtonDelegateCallback(cell, indexPath);
 			
